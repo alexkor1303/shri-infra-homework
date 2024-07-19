@@ -32,7 +32,8 @@ jobs:
       - name: Login to Yandex Container Registry
         env:
           YANDEX_OAUTH_TOKEN: ${{ secrets.YANDEX_OAUTH_TOKEN }}
-        run: echo $YANDEX_OAUTH_TOKEN | docker login -u oauth --password-stdin cr.yandex
+        run: |
+          echo $YANDEX_OAUTH_TOKEN | docker login --username oauth --password-stdin cr.yandex
 
       - name: Push Docker image
         run: |
@@ -54,11 +55,14 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Create GitHub Issue
-        uses: peter-evans/create-issue-from-file@v2
+      - name: Set up GitHub CLI
+        uses: actions/setup-gh@v1
         with:
-          title: Release ${{ github.run_number }}
-          content-filepath: ./release-notes.md
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Issue
+        run: |
+          gh issue create --title "Release ${{ github.run_number }}" --body "Release details for version ${{ github.run_number }}" --label "release"
 
       - name: Update CHANGELOG.md
         run: |
