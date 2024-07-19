@@ -24,11 +24,6 @@ jobs:
           npm test &
           wait
 
-      - name: Create release branch
-        run: |
-          git checkout -b releases/${{ github.run_number }} main
-          git push --set-upstream origin releases/${{ github.run_number }}
-
       - name: Build Docker image
         run: |
           docker build -t cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }} .
@@ -73,6 +68,11 @@ jobs:
         id: commits
         run: echo "::set-output name=commits::$(git log --pretty=format:'%h - %s' ${{ steps.prev_tag.outputs.prev_tag }}..HEAD)"
 
+      - name: Create release branch
+        run: |
+          git checkout -b releases/${{ github.run_number }}
+          git push --set-upstream origin releases/${{ github.run_number }}
+
       - name: Update CHANGELOG.md
         run: |
           echo "## Release ${{ github.run_number }} by ${{ github.actor }}" >> CHANGELOG.md
@@ -82,17 +82,22 @@ jobs:
           echo "Docker Image: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
           git add CHANGELOG.md
           git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
-          git push --set-upstream origin releases/${{ github.run_number }}
+          git push origin releases/${{ github.run_number }}
 
       - name: Create Pull Request
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr create --title "Update CHANGELOG for release ${{ github.run_number }}" --body "Automated PR for updating CHANGELOG for release ${{ github.run_number }}" --base main --head releases/${{ github.run_number }}
+        id: create_pr
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.PAT }}
+          commit-message: "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
+          title: "Update CHANGELOG for release ${{ github.run_number }}"
+          body: "Automated PR for updating CHANGELOG for release ${{ github.run_number }}"
+          base: main
+          head: releases/${{ github.run_number }}
 
       - name: Merge Pull Request
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
           PR_NUMBER=$(gh pr list --head releases/${{ github.run_number }} --json number --jq '.[0].number')
           gh pr merge $PR_NUMBER --admin --squash --delete-branch
