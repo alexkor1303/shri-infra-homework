@@ -62,7 +62,7 @@ jobs:
 
       - name: Authenticate GitHub CLI
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
+          echo ${{ secrets.PAT }} | gh auth login --with-token
 
       - name: Create Label if not exists
         run: |
@@ -70,7 +70,7 @@ jobs:
             gh label create release --description "Release label"
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
 
       - name: Get previous tag
         id: prev_tag
@@ -92,7 +92,7 @@ jobs:
           - **Docker Image**: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
           " --label "release"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
 
       - name: Configure Git
         run: |
@@ -119,6 +119,9 @@ jobs:
           base: main
           title: "Update CHANGELOG for release ${{ github.run_number }}"
           body: "This PR updates the CHANGELOG for release ${{ github.run_number }}."
+
+      - name: Wait for Pull Request to be available
+        run: sleep 5
 
       - name: Merge Pull Request
         run: |
