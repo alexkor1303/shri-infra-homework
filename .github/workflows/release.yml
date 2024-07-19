@@ -32,8 +32,7 @@ jobs:
       - name: Login to Yandex Container Registry
         env:
           YANDEX_OAUTH_TOKEN: ${{ secrets.YANDEX_OAUTH_TOKEN }}
-        run: |
-          echo $YANDEX_OAUTH_TOKEN | docker login --username oauth --password-stdin cr.yandex
+        run: echo $YANDEX_OAUTH_TOKEN | docker login --username oauth --password-stdin cr.yandex
 
       - name: Push Docker image
         run: |
@@ -47,9 +46,8 @@ jobs:
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: v${{ github.run_number }}
           release_name: Release ${{ github.run_number }}
           draft: false
@@ -62,11 +60,10 @@ jobs:
 
       - name: Create Label if not exists
         run: |
+          gh auth login --with-token ${{ secrets.GITHUB_TOKEN }}
           if ! gh label list | grep -q "release"; then
             gh label create release --description "Release label"
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get previous tag
         id: prev_tag
@@ -78,7 +75,6 @@ jobs:
 
       - name: Create GitHub Issue
         run: |
-          gh auth login --with-token <<< ${{ secrets.GITHUB_TOKEN }}
           gh issue create --title "Release ${{ github.run_number }}" --body "
           ## Release details
           - **Date**: $(date)
@@ -88,6 +84,8 @@ jobs:
           ${{ steps.commits.outputs.commits }}
           - **Docker Image**: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
           " --label "release"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
@@ -96,11 +94,8 @@ jobs:
 
       - name: Update CHANGELOG.md
         run: |
-          echo "## Release ${{ github.run_number }} by ${{ github.actor }}" >> CHANGELOG.md
-          echo "Date: $(date)" >> CHANGELOG.md
-          echo "Commits:" >> CHANGELOG.md
-          echo "${{ steps.commits.outputs.commits }}" >> CHANGELOG.md
-          echo "Docker Image: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
+          new_content="## Release ${{ github.run_number }} by ${{ github.actor }}\nDate: $(date)\nCommits:\n${{ steps.commits.outputs.commits }}\nDocker Image: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}\n"
+          echo -e "$new_content\n$(cat CHANGELOG.md)" > CHANGELOG.md
           git add CHANGELOG.md
           git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
           git push --set-upstream origin releases/${{ github.run_number }}
