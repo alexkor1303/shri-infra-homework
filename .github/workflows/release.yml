@@ -13,16 +13,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run linter
-        run: npm run lint
-
-      - name: Run tests
-        run: npm test
+      - name: Run linter and tests
+        run: |
+          npm run lint &
+          npm test &
+          wait
 
       - name: Create release branch
         run: |
           git checkout -b releases/${{ github.run_number }} main
-          git push origin releases/${{ github.run_number }}
+          git push --set-upstream origin releases/${{ github.run_number }}
 
       - name: Build Docker image
         run: |
@@ -68,10 +68,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get previous tag
+        id: prev_tag
+        run: echo "::set-output name=prev_tag::$(git describe --tags --abbrev=0 HEAD^)"
+
+      - name: Get commit list
+        id: commits
+        run: echo "::set-output name=commits::$(git log --pretty=format:'%h - %s' ${{ steps.prev_tag.outputs.prev_tag }}..HEAD)"
+
       - name: Create GitHub Issue
         run: |
           gh auth login --with-token <<< ${{ secrets.GITHUB_TOKEN }}
-          gh issue create --title "Release ${{ github.run_number }}" --body "Release details for version ${{ github.run_number }} by ${{ github.actor }}" --label "release"
+          gh issue create --title "Release ${{ github.run_number }}" --body "
+          ## Release details
+          - **Date**: $(date)
+          - **Author**: ${{ github.actor }}
+          - **Version**: ${{ github.run_number }}
+          - **Commits**:
+          ${{ steps.commits.outputs.commits }}
+          - **Docker Image**: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
+          " --label "release"
 
       - name: Configure Git
         run: |
@@ -81,6 +97,10 @@ jobs:
       - name: Update CHANGELOG.md
         run: |
           echo "## Release ${{ github.run_number }} by ${{ github.actor }}" >> CHANGELOG.md
+          echo "Date: $(date)" >> CHANGELOG.md
+          echo "Commits:" >> CHANGELOG.md
+          echo "${{ steps.commits.outputs.commits }}" >> CHANGELOG.md
+          echo "Docker Image: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
           git add CHANGELOG.md
           git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
-          git push
+          git push --set-upstream origin releases/${{ github.run_number }}
