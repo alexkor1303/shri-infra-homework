@@ -30,7 +30,9 @@ jobs:
           docker tag cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
       - name: Login to Yandex Container Registry
-        run: echo ${{ secrets.YANDEX_KEY_SECRET }} | docker login -u oauth --password-stdin cr.yandex
+        env:
+          YANDEX_OAUTH_TOKEN: ${{ secrets.YANDEX_OAUTH_TOKEN }}
+        run: echo $YANDEX_OAUTH_TOKEN | docker login -u oauth --password-stdin cr.yandex
 
       - name: Push Docker image
         run: |
