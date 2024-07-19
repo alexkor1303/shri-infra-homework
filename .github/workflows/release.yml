@@ -62,7 +62,7 @@ jobs:
 
       - name: Authenticate GitHub CLI
         run: |
-          echo ${{ secrets.PAT }} | gh auth login --with-token
+          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
 
       - name: Create Label if not exists
         run: |
@@ -70,7 +70,7 @@ jobs:
             gh label create release --description "Release label"
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get previous tag
         id: prev_tag
@@ -92,7 +92,7 @@ jobs:
           - **Docker Image**: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
           " --label "release"
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
@@ -111,20 +111,14 @@ jobs:
           git push --set-upstream origin releases/${{ github.run_number }}
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v4
-        with:
-          token: ${{ secrets.PAT }}
-          commit-message: "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
-          branch: releases/${{ github.run_number }}
-          base: main
-          title: "Update CHANGELOG for release ${{ github.run_number }}"
-          body: "This PR updates the CHANGELOG for release ${{ github.run_number }}."
-
-      - name: Wait for Pull Request to be available
-        run: sleep 5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create --title "Update CHANGELOG for release ${{ github.run_number }}" --body "Automated PR for updating CHANGELOG for release ${{ github.run_number }}" --base main --head releases/${{ github.run_number }}
 
       - name: Merge Pull Request
-        run: |
-          gh pr merge $(gh pr list --head releases/${{ github.run_number }} --json number --jq '.[0].number') --admin --delete-branch
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          PAT: ${{ secrets.PAT }}
+        run: |
+          PR_NUMBER=$(gh pr list --head releases/${{ github.run_number }} --json number --jq '.[0].number')
+          gh pr merge $PR_NUMBER --admin --squash --delete-branch --repo ${{ github.repository }} --token $PAT
