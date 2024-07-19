@@ -27,7 +27,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }} .
-          docker tag cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+          docker tag cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
       - name: Login to Yandex Container Registry
         env:
@@ -36,8 +36,8 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker push cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}
-          docker push cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
+          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
       - name: Tag release
         run: |
@@ -101,7 +101,7 @@ jobs:
           - **Version**: ${{ github.run_number }}
           - **Commits**:
           ${{ steps.commits.outputs.commits }}
-          - **Docker Image**: cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}
+          - **Docker Image**: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
           " --label "release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -119,7 +119,7 @@ jobs:
           echo "Date: $(date)" >> CHANGELOG.md
           echo "Commits:" >> CHANGELOG.md
           echo "${{ steps.commits.outputs.commits }}" >> CHANGELOG.md
-          echo "Docker Image: cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
+          echo "Docker Image: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
           git add CHANGELOG.md
           git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
           git push origin main
