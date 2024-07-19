@@ -27,18 +27,18 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }} .
-          docker tag cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+          docker tag cr.yandex/${{ secrets.YANДЕКС_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YANДЕКС_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
       - name: Login to Yandex Container Registry
         env:
-          YANDEX_OAUTH_TOKEN: ${{ secrets.YANDEX_OAUTH_TOKEN }}
+          YANDEX_OAUTH_TOKEN: ${{ secrets.YANДЕКС_OAUTH_TOKEN }}
         run: |
-          echo $YANDEX_OAUTH_TOKEN | docker login --username oauth --password-stdin cr.yandex
+          echo $YANЕКС_OAUTH_TOKEN | docker login --username oauth --password-stdin cr.yandex
 
       - name: Push Docker image
         run: |
-          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
-          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+          docker push cr.yandex/${{ secrets.YANДЕКС_REGISTRY_ID }}/app:${{ github.run_number }}
+          docker push cr.yandex/${{ secrets.YANДЕКС_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
       - name: Tag release
         run: |
@@ -79,7 +79,7 @@ jobs:
           echo "Date: $(date)" >> CHANGELOG.md
           echo "Commits:" >> CHANGELOG.md
           echo "${{ steps.commits.outputs.commits }}" >> CHANGELOG.md
-          echo "Docker Image: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
+          echo "Docker Image: cr.yandex/${{ secrets.YANДЕКС_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
           git add CHANGELOG.md
           git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
           git push origin releases/${{ github.run_number }}
@@ -96,12 +96,14 @@ jobs:
           head: releases/${{ github.run_number }}
 
       - name: Debug PR list
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
         run: |
           gh pr list --head releases/${{ github.run_number }} --json number,title
 
       - name: Merge Pull Request
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GH_TOKEN: ${{ secrets.PAT }}
         run: |
           PR_NUMBER=$(gh pr list --head releases/${{ github.run_number }} --json number --jq '.[0].number')
           if [ -z "$PR_NUMBER" ]; then
