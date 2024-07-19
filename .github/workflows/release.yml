@@ -27,18 +27,17 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }} .
-          docker tag cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+          docker tag cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
       - name: Login to Yandex Container Registry
         env:
           YANDEX_OAUTH_TOKEN: ${{ secrets.YANDEX_OAUTH_TOKEN }}
-        run: |
-          echo $YANDEX_OAUTH_TOKEN | docker login --username oauth --password-stdin cr.yandex
+        run: echo $YANDEX_OAUTH_TOKEN | docker login --username oauth --password-stdin cr.yandex
 
       - name: Push Docker image
         run: |
-          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
-          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+          docker push cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}
+          docker push cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
       - name: Tag release
         run: |
@@ -74,11 +73,24 @@ jobs:
 
       - name: Get previous tag
         id: prev_tag
-        run: echo "::set-output name=prev_tag::$(git describe --tags --abbrev=0 HEAD^)"
+        run: |
+          prev_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "v0.0")
+          echo "::set-output name=prev_tag::${prev_tag}"
 
       - name: Get commit list
         id: commits
-        run: echo "::set-output name=commits::$(git log --pretty=format:'%h - %s' ${{ steps.prev_tag.outputs.prev_tag }}..HEAD)"
+        run: |
+          if [ "${{ steps.prev_tag.outputs.prev_tag }}" = "v0.0" ]; then
+            echo "::set-output name=commits::No previous commits"
+          else
+            commits=$(git log --pretty=format:'%h - %s' ${{ steps.prev_tag.outputs.prev_tag }}..HEAD)
+            echo "::set-output name=commits::${commits}"
+          fi
+
+      - name: Debug commit list
+        run: |
+          echo "Previous tag: ${{ steps.prev_tag.outputs.prev_tag }}"
+          echo "Commits: ${{ steps.commits.outputs.commits }}"
 
       - name: Create GitHub Issue
         run: |
@@ -89,7 +101,7 @@ jobs:
           - **Version**: ${{ github.run_number }}
           - **Commits**:
           ${{ steps.commits.outputs.commits }}
-          - **Docker Image**: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
+          - **Docker Image**: cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}
           " --label "release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -99,13 +111,15 @@ jobs:
           git config --global user.email "${{ github.actor }}@example.com"
           git config --global user.name "${{ github.actor }}"
 
-      - name: Update CHANGELOG.md
+      - name: Update CHANGELOG.md in main branch
         run: |
+          git checkout main
+          git pull origin main
           echo "## Release ${{ github.run_number }} by ${{ github.actor }}" >> CHANGELOG.md
           echo "Date: $(date)" >> CHANGELOG.md
           echo "Commits:" >> CHANGELOG.md
           echo "${{ steps.commits.outputs.commits }}" >> CHANGELOG.md
-          echo "Docker Image: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
+          echo "Docker Image: cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
           git add CHANGELOG.md
           git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
-          git push --set-upstream origin releases/${{ github.run_number }}
+          git push origin main
