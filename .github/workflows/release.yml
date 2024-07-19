@@ -125,6 +125,12 @@ jobs:
           body: "This PR updates the CHANGELOG for release ${{ github.run_number }}."
           base: main
 
+      - name: Approve Pull Request
+        run: |
+          gh pr review changelog-update-${{ github.run_number }} --approve
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Merge Pull Request
         run: |
           gh pr merge changelog-update-${{ github.run_number }} --admin --merge
