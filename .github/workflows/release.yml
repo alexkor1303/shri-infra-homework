@@ -32,7 +32,8 @@ jobs:
       - name: Login to Yandex Container Registry
         env:
           YANDEX_OAUTH_TOKEN: ${{ secrets.YANDEX_OAUTH_TOKEN }}
-        run: echo $YANDEX_OAUTH_TOKEN | docker login --username oauth --password-stdin cr.yandex
+        run: |
+          echo $YANDEX_OAUTH_TOKEN | docker login --username oauth --password-stdin cr.yandex
 
       - name: Push Docker image
         run: |
@@ -73,24 +74,11 @@ jobs:
 
       - name: Get previous tag
         id: prev_tag
-        run: |
-          prev_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "v0.0")
-          echo "::set-output name=prev_tag::${prev_tag}"
+        run: echo "::set-output name=prev_tag::$(git describe --tags --abbrev=0 HEAD^)"
 
       - name: Get commit list
         id: commits
-        run: |
-          if [ "${{ steps.prev_tag.outputs.prev_tag }}" = "v0.0" ]; then
-            echo "::set-output name=commits::No previous commits"
-          else
-            commits=$(git log --pretty=format:'%h - %s' ${{ steps.prev_tag.outputs.prev_tag }}..HEAD)
-            echo "::set-output name=commits::${commits}"
-          fi
-
-      - name: Debug commit list
-        run: |
-          echo "Previous tag: ${{ steps.prev_tag.outputs.prev_tag }}"
-          echo "Commits: ${{ steps.commits.outputs.commits }}"
+        run: echo "::set-output name=commits::$(git log --pretty=format:'%h - %s' ${{ steps.prev_tag.outputs.prev_tag }}..HEAD)"
 
       - name: Create GitHub Issue
         run: |
@@ -111,10 +99,11 @@ jobs:
           git config --global user.email "${{ github.actor }}@example.com"
           git config --global user.name "${{ github.actor }}"
 
-      - name: Update CHANGELOG.md in main branch
+      - name: Checkout main branch
+        run: git checkout main
+
+      - name: Update CHANGELOG.md
         run: |
-          git checkout main
-          git pull origin main
           echo "## Release ${{ github.run_number }} by ${{ github.actor }}" >> CHANGELOG.md
           echo "Date: $(date)" >> CHANGELOG.md
           echo "Commits:" >> CHANGELOG.md
@@ -122,4 +111,9 @@ jobs:
           echo "Docker Image: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
           git add CHANGELOG.md
           git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
-          git push origin main
+
+      - name: Push CHANGELOG.md to main using PAT
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+        run: |
+          git push https://${{ secrets.GITHUB_PAT }}@github.com/${{ github.repository }} main
