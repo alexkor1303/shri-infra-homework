@@ -32,11 +32,12 @@ jobs:
       - name: Login to Yandex Container Registry
         env:
           YANDEX_OAUTH_TOKEN: ${{ secrets.YANDEX_OAUTH_TOKEN }}
-        run: echo $YANDEX_OAUTH_TOKEN | docker login --username oauth --password-stdin cr.yandex
+        run: |
+          echo $YANDEX_OAUTH_TOKEN | docker login --username oauth --password-stdin cr.yandex
 
       - name: Push Docker image
         run: |
-          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
+          docker push cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}
           docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
       - name: Tag release
@@ -46,8 +47,9 @@ jobs:
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: v${{ github.run_number }}
           release_name: Release ${{ github.run_number }}
           draft: false
@@ -60,10 +62,11 @@ jobs:
 
       - name: Create Label if not exists
         run: |
-          gh auth login --with-token ${{ secrets.GITHUB_TOKEN }}
           if ! gh label list | grep -q "release"; then
             gh label create release --description "Release label"
           fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get previous tag
         id: prev_tag
@@ -75,6 +78,7 @@ jobs:
 
       - name: Create GitHub Issue
         run: |
+          gh auth login --with-token <<< ${{ secrets.GITHUB_TOKEN }}
           gh issue create --title "Release ${{ github.run_number }}" --body "
           ## Release details
           - **Date**: $(date)
@@ -84,8 +88,6 @@ jobs:
           ${{ steps.commits.outputs.commits }}
           - **Docker Image**: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
           " --label "release"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
