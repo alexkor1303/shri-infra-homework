@@ -31,8 +31,10 @@ jobs:
 
       - name: Login to Yandex Container Registry
         env:
-          YANDEX_OAUTH_TOKEN: ${{ secrets.YANDEX_OAUTH_TOKEN }}
-        run: echo $YANDEX_OAUTH_TOKEN | docker login -u oauth --password-stdin cr.yandex
+          YANDEX_KEY_ID: ${{ secrets.YANDEX_KEY_ID }}
+          YANDEX_KEY_SECRET: ${{ secrets.YANDEX_KEY_SECRET }}
+        run: |
+          docker login --username oauth --password $YANDEX_KEY_SECRET cr.yandex
 
       - name: Push Docker image
         run: |
