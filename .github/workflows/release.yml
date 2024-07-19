@@ -60,14 +60,27 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gh
 
+      - name: Create Label if not exists
+        run: |
+          if ! gh label list | grep -q "release"; then
+            gh label create release --description "Release label"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create GitHub Issue
         run: |
           gh auth login --with-token <<< ${{ secrets.GITHUB_TOKEN }}
-          gh issue create --title "Release ${{ github.run_number }}" --body "Release details for version ${{ github.run_number }}" --label "release"
+          gh issue create --title "Release ${{ github.run_number }}" --body "Release details for version ${{ github.run_number }} by ${{ github.actor }}" --label "release"
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "${{ github.actor }}@example.com"
+          git config --global user.name "${{ github.actor }}"
 
       - name: Update CHANGELOG.md
         run: |
-          echo "## Release ${{ github.run_number }}" >> CHANGELOG.md
+          echo "## Release ${{ github.run_number }} by ${{ github.actor }}" >> CHANGELOG.md
           git add CHANGELOG.md
-          git commit -m "Update CHANGELOG for release ${{ github.run_number }}"
+          git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
           git push
