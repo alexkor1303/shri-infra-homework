@@ -108,31 +108,20 @@ jobs:
           echo "Docker Image: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
           git add CHANGELOG.md
           git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
+          git push --set-upstream origin releases/${{ github.run_number }}
 
-      - name: Push Changelog Update Branch
-        run: |
-          git push origin HEAD:changelog-update-${{ github.run_number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Pull Request for Changelog
-        uses: peter-evans/create-pull-request@v3
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Update CHANGELOG for release ${{ github.run_number }}"
-          branch: changelog-update-${{ github.run_number }}
+          token: ${{ secrets.PAT }}
+          commit-message: "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
+          branch: releases/${{ github.run_number }}
+          base: main
           title: "Update CHANGELOG for release ${{ github.run_number }}"
           body: "This PR updates the CHANGELOG for release ${{ github.run_number }}."
-          base: main
-
-      - name: Approve Pull Request
-        run: |
-          gh pr review changelog-update-${{ github.run_number }} --approve
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Merge Pull Request
         run: |
-          gh pr merge changelog-update-${{ github.run_number }} --admin --merge
+          gh pr merge $(gh pr list --head releases/${{ github.run_number }} --json number --jq '.[0].number') --admin --delete-branch
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
