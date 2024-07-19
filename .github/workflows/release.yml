@@ -60,22 +60,10 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Install GitHub CLI
+      - name: Configure Git
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-
-      - name: Authenticate GitHub CLI
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
-
-      - name: Create Label if not exists
-        run: |
-          if ! gh label list | grep -q "release"; then
-            gh label create release --description "Release label"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git config --global user.email "${{ github.actor }}@example.com"
+          git config --global user.name "${{ github.actor }}"
 
       - name: Get previous tag
         id: prev_tag
@@ -84,25 +72,6 @@ jobs:
       - name: Get commit list
         id: commits
         run: echo "::set-output name=commits::$(git log --pretty=format:'%h - %s' ${{ steps.prev_tag.outputs.prev_tag }}..HEAD)"
-
-      - name: Create GitHub Issue
-        run: |
-          gh issue create --title "Release ${{ github.run_number }}" --body "
-          ## Release details
-          - **Date**: $(date)
-          - **Author**: ${{ github.actor }}
-          - **Version**: ${{ github.run_number }}
-          - **Commits**:
-          ${{ steps.commits.outputs.commits }}
-          - **Docker Image**: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
-          " --label "release"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Configure Git
-        run: |
-          git config --global user.email "${{ github.actor }}@example.com"
-          git config --global user.name "${{ github.actor }}"
 
       - name: Update CHANGELOG.md
         run: |
@@ -123,7 +92,7 @@ jobs:
 
       - name: Merge Pull Request
         env:
-          PAT: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_NUMBER=$(gh pr list --head releases/${{ github.run_number }} --json number --jq '.[0].number')
-          gh pr merge $PR_NUMBER --admin --squash --delete-branch --repo ${{ github.repository }} --token $PAT
+          gh pr merge $PR_NUMBER --admin --squash --delete-branch
