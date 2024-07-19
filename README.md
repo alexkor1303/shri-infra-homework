@@ -146,5 +146,3 @@ npm start
 1-Docker tutor : https://www.youtube.com/watch?v=3c-iBn73dDE
 ssh alexkor@89.169.167.48
 2-dockerDeployer
-keyID : YCAJE_cmXzieBooI5QqNfN2Wf
-secretKey : YCPajJnko8k7uFEbPnJu-neqtybHJ1FwOMb4zyhX
