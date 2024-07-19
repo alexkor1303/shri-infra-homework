@@ -60,6 +60,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gh
 
+      - name: Authenticate GitHub CLI
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
+
       - name: Create Label if not exists
         run: |
           if ! gh label list | grep -q "release"; then
@@ -78,7 +82,6 @@ jobs:
 
       - name: Create GitHub Issue
         run: |
-          gh auth login --with-token <<< ${{ secrets.GITHUB_TOKEN }}
           gh issue create --title "Release ${{ github.run_number }}" --body "
           ## Release details
           - **Date**: $(date)
@@ -88,6 +91,8 @@ jobs:
           ${{ steps.commits.outputs.commits }}
           - **Docker Image**: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
           " --label "release"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
