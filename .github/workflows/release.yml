@@ -37,8 +37,8 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker push cr.yandex/${{ secrets.YANДЕКС_REGISTRY_ID }}/app:${{ github.run_number }}
-          docker push cr.yandex/${{ secrets.YANДЕКС_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
+          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
       - name: Tag release
         run: |
