@@ -37,7 +37,7 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker push cr.yandex/${{ secrets.YANДEX_REGISTRY_ID }}/app:${{ github.run_number }}
+          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
           docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
 
       - name: Tag release
@@ -96,8 +96,11 @@ jobs:
 
       - name: Update CHANGELOG.md
         run: |
-          new_content="## Release ${{ github.run_number }} by ${{ github.actor }}\nDate: $(date)\nCommits:\n${{ steps.commits.outputs.commits }}\nDocker Image: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}\n"
-          echo -e "$new_content\n$(cat CHANGELOG.md)" > CHANGELOG.md
+          echo "## Release ${{ github.run_number }} by ${{ github.actor }}" >> CHANGELOG.md
+          echo "Date: $(date)" >> CHANGELOG.md
+          echo "Commits:" >> CHANGELOG.md
+          echo "${{ steps.commits.outputs.commits }}" >> CHANGELOG.md
+          echo "Docker Image: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}" >> CHANGELOG.md
           git add CHANGELOG.md
           git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
           git push --set-upstream origin releases/${{ github.run_number }}
