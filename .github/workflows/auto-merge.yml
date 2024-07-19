@@ -1,0 +1,42 @@
+name: Auto Merge
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Auto Merge
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { context, github } = require('@actions/github');
+            const pr = context.payload.pull_request;
+
+            if (pr.state === 'open' && pr.base.ref === 'main') {
+              const { data: { statuses } } = await github.repos.listCommitStatusesForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha,
+              });
+
+              const successfulChecks = statuses.filter(status => status.state === 'success').length;
+              const requiredChecks = 2; // Количество обязательных проверок (например, lint и test)
+
+              if (successfulChecks >= requiredChecks) {
+                await github.pulls.merge({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                });
+              }
+            }
