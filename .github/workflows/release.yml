@@ -55,13 +55,14 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Set up GitHub CLI
-        uses: actions/setup-gh@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
 
       - name: Create GitHub Issue
         run: |
+          gh auth login --with-token <<< ${{ secrets.GITHUB_TOKEN }}
           gh issue create --title "Release ${{ github.run_number }}" --body "Release details for version ${{ github.run_number }}" --label "release"
 
       - name: Update CHANGELOG.md
