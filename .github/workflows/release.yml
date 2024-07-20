@@ -204,7 +204,6 @@ jobs:
   create_pull_request:
     runs-on: ubuntu-latest
     needs: release
-
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
@@ -218,8 +217,9 @@ jobs:
 
       - name: Create Pull Request
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          gh auth setup-git
           gh pr create \
             --title "Update CHANGELOG for release ${{ github.run_number }}" \
             --body "This PR updates the CHANGELOG.md file for release ${{ github.run_number }}." \
@@ -228,7 +228,7 @@ jobs:
 
       - name: Merge Pull Request
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pr_number=$(gh pr list --base main --head releases/${{ github.run_number }} --json number --jq '.[0].number')
           gh pr merge $pr_number --squash --delete-branch=false
