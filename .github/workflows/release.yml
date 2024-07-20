@@ -217,20 +217,18 @@ jobs:
           ref: releases/${{ github.run_number }}
 
       - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
           gh pr create \
             --title "Update CHANGELOG for release ${{ github.run_number }}" \
             --body "This PR updates the CHANGELOG.md file for release ${{ github.run_number }}." \
             --base main \
             --head releases/${{ github.run_number }}
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Merge Pull Request
-        run: |
-          echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
-          pr_number=$(gh pr list --base main --head releases/${{ github.run_number }} --json number --jq '.[0].number')
-          gh pr merge $pr_number --squash --delete-branch=false
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          pr_number=$(gh pr list --base main --head releases/${{ github.run_number }} --json number --jq '.[0].number')
+          gh pr merge $pr_number --squash --delete-branch=false
