@@ -216,7 +216,7 @@ jobs:
         with:
           ref: releases/${{ github.run_number }}
 
-       - name: Create Pull Request
+      - name: Create Pull Request
         run: |
           echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
           gh pr create \
