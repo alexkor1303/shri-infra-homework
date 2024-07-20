@@ -226,3 +226,11 @@ jobs:
             --head releases/${{ github.run_number }}
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Merge Pull Request
+        run: |
+          echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
+          pr_number=$(gh pr list --base main --head releases/${{ github.run_number }} --json number --jq '.[0].number')
+          gh pr merge $pr_number --squash --delete-branch=false
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
