@@ -13,3 +13,8 @@ Date: Sat Jul 20 17:08:19 UTC 2024
 Commits:
 
 Docker Image: cr.yandex/crpp0nrjdp48uhc0qli2/app:36
+## Release 39 by alexkor1303
+Date: Sat Jul 20 17:30:31 UTC 2024
+Commits:
+
+Docker Image: cr.yandex/crpp0nrjdp48uhc0qli2/app:39
