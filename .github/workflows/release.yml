@@ -201,6 +201,29 @@ jobs:
           git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
           git push origin releases/${{ github.run_number }}
 
+      - name: Create GitHub Issue
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { run_number, actor } = github.context;
+            const prevTag = core.getInput('prev_tag');
+            const commits = core.getInput('commits');
+            const issueTitle = `Release ${run_number}`;
+            const issueBody = `
+              ## Release ${run_number} by ${actor}
+              **Date:** ${new Date().toISOString()}
+              **Commits:**
+              ${commits}
+              **Docker Image:** cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${run_number}
+            `;
+            const issue = await github.issues.create({
+              ...github.context.repo,
+              title: issueTitle,
+              body: issueBody,
+            });
+            core.setOutput('issue', issue.data.html_url);
+
   create_pull_request:
     runs-on: ubuntu-latest
     needs: release
