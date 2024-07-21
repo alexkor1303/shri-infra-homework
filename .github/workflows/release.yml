@@ -246,6 +246,6 @@ jobs:
           gh issue create \
             --title "Release ${{ github.run_number }}" \
             --body "### Release Information\n- **Date**: $(date)\n- **Author**: ${{ github.actor }}\n- **Version**: ${{ github.run_number }}\n- **Commits**:\n${{ steps.commits.outputs.commits }}\n- **Docker Image**: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}" \
-            --labels "release"
+            --label "release"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
