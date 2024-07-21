@@ -123,6 +123,7 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -206,8 +207,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const runNumber = process.env.GITHUB_RUN_NUMBER;
-            const actor = process.env.GITHUB_ACTOR;
+            const { github, context, core } = require('@actions/github');
+            const runNumber = context.runNumber;
+            const actor = context.actor;
             const prevTag = core.getInput('prev_tag');
             const commits = core.getInput('commits');
             const issueTitle = `Release ${runNumber}`;
@@ -218,13 +220,12 @@ jobs:
               ${commits}
               **Docker Image:** cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${runNumber}
             `;
-            const issue = await github.issues.create({
-              owner: github.context.repo.owner,
-              repo: github.context.repo.repo,
+            github.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
               title: issueTitle,
               body: issueBody,
             });
-            core.setOutput('issue', issue.data.html_url);
 
   create_pull_request:
     runs-on: ubuntu-latest
