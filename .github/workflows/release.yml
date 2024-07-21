@@ -226,6 +226,13 @@ jobs:
             --base main \
             --head releases/${{ github.run_number }}
 
+      - name: Approve Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_number=$(gh pr list --base main --head releases/${{ github.run_number }} --json number --jq '.[0].number')
+          gh pr review $pr_number --approve
+
       - name: Merge Pull Request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
