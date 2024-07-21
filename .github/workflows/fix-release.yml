@@ -17,6 +17,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all branches
+
+      - name: Fetch all branches
+        run: git fetch --all
 
       - name: Checkout release branch
         run: git checkout releases/${{ env.RELEASE_VERSION }}
