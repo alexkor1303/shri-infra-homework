@@ -123,7 +123,6 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -145,7 +144,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }} .
-          docker tag cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+          docker tag cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }} cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:latest
 
       - name: Login to Yandex Container Registry
         env:
@@ -156,7 +155,7 @@ jobs:
       - name: Push Docker image
         run: |
           docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}
-          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}_latest
+          docker push cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:latest
 
       - name: Tag release
         run: |
@@ -202,31 +201,6 @@ jobs:
           git commit -m "Update CHANGELOG for release ${{ github.run_number }} by ${{ github.actor }}"
           git push origin releases/${{ github.run_number }}
 
-      - name: Create GitHub Issue
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { github, context, core } = require('@actions/github');
-            const runNumber = context.runNumber;
-            const actor = context.actor;
-            const prevTag = core.getInput('prev_tag');
-            const commits = core.getInput('commits');
-            const issueTitle = `Release ${runNumber}`;
-            const issueBody = `
-              ## Release ${runNumber} by ${actor}
-              **Date:** ${new Date().toISOString()}
-              **Commits:**
-              ${commits}
-              **Docker Image:** cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${runNumber}
-            `;
-            github.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: issueTitle,
-              body: issueBody,
-            });
-
   create_pull_request:
     runs-on: ubuntu-latest
     needs: release
@@ -258,3 +232,20 @@ jobs:
           gh pr merge $pr_number --admin --squash --delete-branch
         env:
           GH_TOKEN: ${{ secrets.PAT }}
+
+  create_issue:
+    runs-on: ubuntu-latest
+    needs: release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create GitHub Issue
+        run: |
+          gh issue create \
+            --title "Release ${{ github.run_number }}" \
+            --body "### Release Information\n- **Date**: $(date)\n- **Author**: ${{ github.actor }}\n- **Version**: ${{ github.run_number }}\n- **Commits**:\n${{ steps.commits.outputs.commits }}\n- **Docker Image**: cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ github.run_number }}" \
+            --labels "release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
