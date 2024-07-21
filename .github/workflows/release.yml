@@ -208,16 +208,17 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { run_number, actor } = github.context;
+            const runNumber = process.env.GITHUB_RUN_NUMBER;
+            const actor = process.env.GITHUB_ACTOR;
             const prevTag = core.getInput('prev_tag');
             const commits = core.getInput('commits');
-            const issueTitle = `Release ${run_number}`;
+            const issueTitle = `Release ${runNumber}`;
             const issueBody = `
-              ## Release ${run_number} by ${actor}
+              ## Release ${runNumber} by ${actor}
               **Date:** ${new Date().toISOString()}
               **Commits:**
               ${commits}
-              **Docker Image:** cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${run_number}
+              **Docker Image:** cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${runNumber}
             `;
             const issue = await github.issues.create({
               ...github.context.repo,
@@ -225,6 +226,9 @@ jobs:
               body: issueBody,
             });
             core.setOutput('issue', issue.data.html_url);
+        env:
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          GITHUB_ACTOR: ${{ github.actor }}
 
   update_changelog:
     runs-on: ubuntu-latest
