@@ -1,0 +1,55 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Version of the release to deploy"
+        required: true
+      issue_number:
+        description: "Number of the GitHub Issue"
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: ${{ github.event.inputs.release_version }}
+      ISSUE_NUMBER: ${{ github.event.inputs.issue_number }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check Docker image exists
+        run: |
+          IMAGE_TAG="cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ env.RELEASE_VERSION }}_latest"
+          if ! docker pull $IMAGE_TAG; then
+            echo "Docker image $IMAGE_TAG does not exist"
+            exit 1
+          fi
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy Docker image to VM
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+            docker pull cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ env.RELEASE_VERSION }}_latest
+            docker stop app || true
+            docker rm app || true
+            docker run -d --name app -p 80:80 cr.yandex/${{ secrets.YANDEX_REGISTRY_ID }}/app:${{ env.RELEASE_VERSION }}_latest
+          EOF
+
+      - name: Add comment to GitHub Issue
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          body: |
+            ## Release Deployed to Production
+            **Date:** $(date)
+            **Deployed by:** ${{ github.actor }}
+            **Version:** ${{ env.RELEASE_VERSION }}
