@@ -58,8 +58,8 @@ jobs:
 
       - name: Tag release fix
         run: |
-          git tag ${ env.RELEASE_VERSION }_fix${ env.FIX_RUN_NUMBER }
-          git push origin ${ env.RELEASE_VERSION }_fix${ env.FIX_RUN_NUMBER }
+          git tag ${env.RELEASE_VERSION}_fix${env.FIX_RUN_NUMBER}
+          git push origin ${env.RELEASE_VERSION}_fix${env.FIX_RUN_NUMBER}
 
       - name: Get previous tag
         id: prev_tag
