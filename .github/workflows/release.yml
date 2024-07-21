@@ -217,25 +217,18 @@ jobs:
 
       - name: Create Pull Request
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          gh auth setup-git
+          gh auth login --with-token <<< $GH_TOKEN
           gh pr create \
             --title "Update CHANGELOG for release ${{ github.run_number }}" \
             --body "This PR updates the CHANGELOG.md file for release ${{ github.run_number }}." \
             --base main \
             --head releases/${{ github.run_number }}
 
-      - name: Approve Pull Request
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          pr_number=$(gh pr list --base main --head releases/${{ github.run_number }} --json number --jq '.[0].number')
-          gh pr review $pr_number --approve
-
       - name: Merge Pull Request
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           pr_number=$(gh pr list --base main --head releases/${{ github.run_number }} --json number --jq '.[0].number')
-          gh pr merge $pr_number --squash --delete-branch=false --admin
+          gh pr merge $pr_number --admin --squash --delete-branch=false
