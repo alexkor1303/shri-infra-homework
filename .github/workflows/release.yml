@@ -220,7 +220,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
-          echo $GH_TOKEN | gh auth login --with-token
           gh pr create \
             --title "Update CHANGELOG for release ${{ github.run_number }}" \
             --body "This PR updates the CHANGELOG.md file for release ${{ github.run_number }}." \
@@ -232,4 +231,4 @@ jobs:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
           pr_number=$(gh pr list --base main --head releases/${{ github.run_number }} --json number --jq '.[0].number')
-          gh pr merge $pr_number --admin --squash --delete-branch=false
+          gh pr merge $pr_number --admin --squash --delete-branch=false$pr_number --admin --squash --delete-branch=false
