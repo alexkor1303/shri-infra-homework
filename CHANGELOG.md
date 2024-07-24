@@ -53,3 +53,8 @@ Date: Sun Jul 21 13:17:15 UTC 2024
 Commits:
 
 Docker Image: cr.yandex/crpp0nrjdp48uhc0qli2/app:59
+## Release 60 by Dagstorn
+Date: Wed Jul 24 05:12:18 UTC 2024
+Commits:
+
+Docker Image: cr.yandex/crpp0nrjdp48uhc0qli2/app:60
