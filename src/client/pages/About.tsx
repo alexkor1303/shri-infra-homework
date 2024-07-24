@@ -12,7 +12,7 @@ export const About: React.FC = () => {
         <div className="col">
           <h1>About</h1>
           <p>Author: Alexander Koryakin</p>
-          <p>Проверяющий: Aлишер Абылкасимов</p>
+          Проверяющий: Aлишер Абылкасимов
         </div>
       </div>
     </div>
